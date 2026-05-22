@@ -98,4 +98,50 @@ router.get('/instant', cacheMiddleware(10 * 60 * 1000), async (req, res) => {
   }
 });
 
+/**
+ * @route  GET /api/search/openwebui
+ * @desc   Open WebUI / Ollama compatible web search endpoint
+ * @access Protected (API Key via Authorization: Bearer or X-Api-Key)
+ * @query  q     - Search query (required)
+ * @query  count - Number of results (default: 5, max: 10)
+ *
+ * Response format follows Open WebUI external search spec:
+ * { "results": [{ "title": "...", "url": "...", "content": "..." }] }
+ *
+ * Setup in Open WebUI:
+ *   Web Search Engine   → external
+ *   External Search URL → http://YOUR_SERVER:3004/api/search/openwebui
+ *   API Key             → searchengine-dev-key-2024
+ */
+router.get('/openwebui', cacheMiddleware(5 * 60 * 1000), async (req, res) => {
+  const { q, count = '5' } = req.query;
+
+  if (!q || q.trim().length === 0) {
+    return res.status(400).json({ error: 'Missing query parameter: q' });
+  }
+
+  const limit = Math.min(parseInt(count) || 5, 10);
+
+  try {
+    const searchResult = await searchWeb(q.trim(), { page: 1 });
+    const rawResults = (searchResult.results || []).slice(0, limit);
+
+    // Map to Open WebUI format: { title, url, content }
+    const results = rawResults.map((r) => ({
+      title: r.title || '',
+      url: r.url || '',
+      content: r.snippet || '',   // Open WebUI uses "content" not "snippet"
+    }));
+
+    console.log(`[OpenWebUI] q="${q}" → ${results.length} results`);
+
+    // Return bare array format expected by Open WebUI (no wrapper)
+    res.json({ results });
+
+  } catch (error) {
+    console.error('[OpenWebUI] Error:', error.message);
+    res.status(500).json({ error: error.message, results: [] });
+  }
+});
+
 module.exports = router;
