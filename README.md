@@ -29,7 +29,7 @@ npm install
 ### 2. Configure Environment
 Edit `.env`:
 ```env
-PORT=3000
+PORT=3004
 API_KEY=your-secret-key-here
 ```
 
@@ -41,7 +41,7 @@ npm run dev      # Development (auto-reload)
 
 ### 4. Open Web UI
 ```
-http://localhost:3000
+http://localhost:3004
 ```
 
 ---
@@ -245,7 +245,7 @@ Search-Engine-API/
 
 | Variable | Default | Description |
 |---|---|---|
-| `PORT` | 3000 | Server port |
+| `PORT` | 3001 | Server port |
 | `API_KEY` | required | Secret API key |
 | `RATE_LIMIT_MAX` | 100 | Max requests per window |
 | `RATE_LIMIT_WINDOW_MS` | 60000 | Rate limit window (ms) |
