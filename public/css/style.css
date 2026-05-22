@@ -528,11 +528,117 @@ body {
 .toast.info { border-color:var(--accent); }
 @keyframes slideIn { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
 
+
+/* ── Site Footer ─────────────────────────────────────────────────── */
+.site-footer {
+  position: relative; z-index: 2;
+  margin-top: 48px;
+  border-top: 1px solid var(--border);
+  background: rgba(5,5,15,0.7);
+  backdrop-filter: blur(16px);
+}
+.footer-inner {
+  max-width: 1200px; margin: 0 auto;
+  padding: 36px 24px 28px;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 18px; text-align: center;
+}
+
+/* Brand */
+.footer-brand { display: flex; align-items: center; gap: 10px; }
+.footer-logo {
+  width: 32px; height: 32px; border-radius: 9px;
+  background: linear-gradient(135deg, #6366f1, #a855f7);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 16px rgba(99,102,241,0.35);
+}
+.footer-brand-name {
+  font-size: 1.05rem; font-weight: 700;
+  background: linear-gradient(90deg, #6366f1, #a855f7);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Description */
+.footer-desc {
+  font-size: 0.82rem; color: var(--text-muted);
+  max-width: 380px; line-height: 1.6; margin: 0;
+}
+
+/* Social links */
+.footer-links { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.footer-social {
+  display: flex; align-items: center; gap: 7px;
+  padding: 7px 14px; border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-dim); font-size: 0.8rem; font-weight: 500;
+  text-decoration: none;
+  transition: all .2s ease;
+}
+.footer-social:hover {
+  color: var(--text);
+  border-color: var(--accent);
+  background: rgba(99,102,241,0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(99,102,241,0.15);
+}
+.footer-social svg { flex-shrink: 0; opacity: 0.75; }
+.footer-social:hover svg { opacity: 1; }
+
+/* Divider */
+.footer-divider {
+  width: 100%; max-width: 400px;
+  height: 1px; background: var(--border);
+  margin: 4px 0;
+}
+
+/* Bottom row */
+.footer-bottom {
+  display: flex; align-items: center; gap: 20px;
+  flex-wrap: wrap; justify-content: center;
+}
+.footer-copy { font-size: 0.8rem; color: var(--text-muted); margin: 0; }
+.footer-author {
+  color: var(--accent); text-decoration: none; font-weight: 600;
+  transition: color .2s;
+}
+.footer-author:hover { color: var(--accent-2); }
+
+/* Support button */
+.footer-support {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 9px 18px; border-radius: 22px;
+  background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(168,85,247,0.15));
+  border: 1px solid rgba(99,102,241,0.3);
+  color: var(--accent); font-size: 0.82rem; font-weight: 600;
+  text-decoration: none;
+  transition: all .25s ease;
+  letter-spacing: 0.2px;
+}
+.footer-support:hover {
+  background: linear-gradient(135deg, rgba(99,102,241,0.25), rgba(168,85,247,0.25));
+  border-color: var(--accent);
+  box-shadow: 0 0 24px rgba(99,102,241,0.25);
+  transform: translateY(-2px);
+}
+
+/* Footer responsive */
+@media (max-width: 480px) {
+  .footer-inner { padding: 28px 16px 24px; gap: 14px; }
+  .footer-links { gap: 8px; }
+  .footer-social { padding: 6px 12px; font-size: 0.78rem; }
+  .footer-social span { display: none; } /* icon only on very small */
+  .footer-social { padding: 8px; border-radius: 50%; }
+  .footer-bottom { gap: 14px; }
+}
+
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width:6px; height:6px; }
 ::-webkit-scrollbar-track { background:transparent; }
 ::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1); border-radius:3px; }
 ::-webkit-scrollbar-thumb:hover { background:rgba(255,255,255,0.2); }
+
 
 /* ══════════════════════════════════════════════
    RESPONSIVE DESIGN — All Platforms
