@@ -8,14 +8,15 @@ const { sleep, truncate } = require('../utils/helpers');
 
 /**
  * Expand a topic into multiple research sub-queries
+ * Keeps the full query intact, adds natural variations (language-agnostic)
  */
 const expandQueries = (topic) => {
   return [
-    topic,
-    `${topic} explained`,
-    `${topic} latest 2024 2025`,
-    `${topic} how does it work`,
-    `${topic} examples use cases`,
+    topic,                          // Exact query as-is
+    `"${topic}"`,                   // Exact phrase in quotes
+    `${topic} 2024 2025`,           // Recent results
+    `${topic} wikipedia`,           // Encyclopedia result
+    `${topic} pengertian OR definition OR meaning`, // Definition in any language
   ];
 };
 

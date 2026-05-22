@@ -43,6 +43,69 @@ const randomDelay = () => new Promise(r => setTimeout(r, 800 + Math.random() * 1
 let bingCookie = '';
 
 /**
+ * Smart query optimizer:
+ * Detects natural language questions (Indonesian/English) and converts
+ * them into effective search queries — strips question words that confuse
+ * Bing into searching the word itself rather than the topic.
+ *
+ * Examples:
+ *   "siapa joko anwar"       → "joko anwar"  (subject becomes the focus)
+ *   "apa itu quantum computing" → "quantum computing"
+ *   "bagaimana cara membuat api" → "cara membuat api"
+ *   "who is elon musk"       → "elon musk"
+ *   "what is machine learning" → "machine learning"
+ */
+const optimizeQuery = (query) => {
+  const q = query.trim();
+
+  // Indonesian/Malay question patterns to strip (leading words only)
+  const idPatterns = [
+    /^siapa\s+(itu\s+)?/i,         // siapa / siapa itu
+    /^apa\s+itu\s+/i,              // apa itu
+    /^apa\s+yang\s+dimaksud\s+(dengan\s+)?/i, // apa yang dimaksud dengan
+    /^apakah\s+/i,                 // apakah
+    /^bagaimana\s+cara\s+/i,       // bagaimana cara → keep "cara ..."
+    /^bagaimana\s+/i,              // bagaimana
+    /^mengapa\s+/i,                // mengapa
+    /^kenapa\s+/i,                 // kenapa
+    /^kapan\s+/i,                  // kapan
+    /^dimana\s+/i,                 // dimana
+    /^berapa\s+/i,                 // berapa
+    /^jelaskan\s+(tentang\s+)?/i,  // jelaskan tentang
+  ];
+
+  // English question patterns to strip (leading words only)
+  const enPatterns = [
+    /^who\s+is\s+/i,               // who is
+    /^who\s+was\s+/i,              // who was
+    /^what\s+is\s+/i,              // what is
+    /^what\s+are\s+/i,             // what are
+    /^what\s+does\s+/i,            // what does
+    /^how\s+does\s+/i,             // how does
+    /^how\s+to\s+/i,               // how to → keep rest
+    /^why\s+is\s+/i,               // why is
+    /^where\s+is\s+/i,             // where is
+    /^when\s+did\s+/i,             // when did
+    /^explain\s+(what\s+is\s+)?/i, // explain what is
+    /^tell\s+me\s+about\s+/i,      // tell me about
+  ];
+
+  let optimized = q;
+  for (const pattern of [...idPatterns, ...enPatterns]) {
+    const result = optimized.replace(pattern, '').trim();
+    // Only apply if the result is not empty
+    if (result.length > 0) {
+      optimized = result;
+      break; // Only strip the first matching pattern
+    }
+  }
+
+  return optimized;
+};
+
+
+
+/**
  * Search Bing (primary engine)
  */
 const searchBing = async (query, options = {}) => {
@@ -64,7 +127,12 @@ const searchBing = async (query, options = {}) => {
   if (bingCookie) reqHeaders['Cookie'] = bingCookie;
 
   const response = await axios.get('https://www.bing.com/search', {
-    params: { q: query, first, count: 10, setlang: 'en', cc: 'US', mkt: 'en-US' },
+    params: {
+      q: query,
+      first,
+      count: 10,
+      FORM: 'QBLH', // Better result formatting
+    },
     headers: reqHeaders,
     timeout: 15000,
     decompress: true,
@@ -149,13 +217,20 @@ const searchBingNews = async (query, options = {}) => {
 
 /**
  * Main searchWeb: Bing primary
+ * Applies smart query optimization for natural language questions
  */
 const searchWeb = async (query, options = {}) => {
   const { page = 1, region = 'wt-wt', safeSearch = 'moderate' } = options;
 
+  // Optimize: convert "siapa joko anwar" → "joko anwar" for better Bing results
+  const optimized = optimizeQuery(query);
+  if (optimized !== query) {
+    console.log(`[Search] Query optimized: "${query}" → "${optimized}"`);
+  }
+
   try {
-    const results = await searchBing(query, { page, region });
-    return { results, query, page, engine: 'bing' };
+    const results = await searchBing(optimized, { page, region });
+    return { results, query, optimizedQuery: optimized, page, engine: 'bing' };
   } catch (error) {
     throw new Error(`Search failed: ${error.message}`);
   }
