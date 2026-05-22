@@ -37,20 +37,74 @@ async function apiFetch(path, options = {}) {
   return data;
 }
 
-// ─── Tab Navigation ───────────────────────────────────────────────────
-document.querySelectorAll('.nav-tab').forEach(btn => {
+// ─── Tab Navigation (header + sidebar tabs) ───────────────────────
+function switchTab(tab) {
+  // Update header nav tabs
+  document.querySelectorAll('.nav-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  // Update sidebar tabs
+  document.querySelectorAll('.sidebar-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  // Switch content
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  const tabEl = $(`tab-${tab}`);
+  if (tabEl) tabEl.classList.add('active');
+}
+
+document.querySelectorAll('.nav-tab').forEach(btn =>
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab))
+);
+
+// ─── Mobile Sidebar ───────────────────────────────────────────────
+const sidebar        = $('sidebar');
+const sidebarOverlay = $('sidebarOverlay');
+const hamburgerBtn   = $('hamburgerBtn');
+
+function openSidebar() {
+  sidebar.classList.add('open');
+  sidebarOverlay.classList.add('active');
+  hamburgerBtn.classList.add('open');
+  hamburgerBtn.setAttribute('aria-expanded', 'true');
+  sidebar.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden'; // prevent scroll behind
+}
+
+function closeSidebar() {
+  sidebar.classList.remove('open');
+  sidebarOverlay.classList.remove('active');
+  hamburgerBtn.classList.remove('open');
+  hamburgerBtn.setAttribute('aria-expanded', 'false');
+  sidebar.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+}
+
+hamburgerBtn.addEventListener('click', () =>
+  sidebar.classList.contains('open') ? closeSidebar() : openSidebar()
+);
+sidebarOverlay.addEventListener('click', closeSidebar);
+$('sidebarClose').addEventListener('click', closeSidebar);
+
+// Sidebar nav tabs — switch content AND close sidebar
+document.querySelectorAll('.sidebar-tab').forEach(btn => {
   btn.addEventListener('click', () => {
-    const tab = btn.dataset.tab;
-    document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-    btn.classList.add('active');
-    const tabEl = $(`tab-${tab}`);
-    if (tabEl) tabEl.classList.add('active');
+    switchTab(btn.dataset.tab);
+    closeSidebar();
   });
 });
 
-// ─── API Key Modal ────────────────────────────────────────────────────
-$('apiKeyBtn').addEventListener('click', () => { $('apiKeyInput').value = state.apiKey; show('apiKeyModal'); });
+// Swipe left to close sidebar
+let _touchStartX = 0;
+sidebar.addEventListener('touchstart', e => { _touchStartX = e.touches[0].clientX; }, { passive: true });
+sidebar.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - _touchStartX;
+  if (dx < -60) closeSidebar(); // swipe left 60px to close
+}, { passive: true });
+
+// Close sidebar on Escape key
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSidebar(); });
+
+// ─── API Key Modal ────────────────────────────────────────────────
+function openApiKeyModal() { $('apiKeyInput').value = state.apiKey; show('apiKeyModal'); }
+$('apiKeyBtn').addEventListener('click', openApiKeyModal);
+$('sidebarApiKeyBtn').addEventListener('click', () => { closeSidebar(); openApiKeyModal(); });
 $('closeModal').addEventListener('click', () => hide('apiKeyModal'));
 $('cancelModal').addEventListener('click', () => hide('apiKeyModal'));
 $('saveApiKey').addEventListener('click', () => {
@@ -63,6 +117,7 @@ $('saveApiKey').addEventListener('click', () => {
   updateApiKeyDisplay();
 });
 $('apiKeyModal').addEventListener('click', (e) => { if (e.target === $('apiKeyModal')) hide('apiKeyModal'); });
+
 
 function updateApiKeyDisplay() {
   const display = $('apiKeyValue');
