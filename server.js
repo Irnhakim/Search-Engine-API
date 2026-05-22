@@ -35,12 +35,12 @@ app.use(express.urlencoded({ extended: true }));
 // ─── Custom Logger (morgan + logStore) ─────────────────────────────
 morgan.token('date', () => new Date().toLocaleTimeString('id-ID', { hour12: false }));
 app.use(morgan((tokens, req, res) => {
-  const method   = tokens.method(req, res);
-  const url      = tokens.url(req, res);
-  const status   = parseInt(tokens.status(req, res));
-  const time     = parseFloat(tokens['response-time'](req, res)).toFixed(0);
-  const ip       = req.ip || req.connection?.remoteAddress || '-';
-  const now      = new Date().toLocaleTimeString('id-ID', { hour12: false });
+  const method = tokens.method(req, res);
+  const url = tokens.url(req, res);
+  const status = parseInt(tokens.status(req, res));
+  const time = parseFloat(tokens['response-time'](req, res)).toFixed(0);
+  const ip = req.ip || req.connection?.remoteAddress || '-';
+  const now = new Date().toLocaleTimeString('id-ID', { hour12: false });
 
   // Skip static assets from logs
   if (!url.startsWith('/api')) return null;
@@ -59,7 +59,7 @@ app.use(morgan((tokens, req, res) => {
   // Console output with colors
   const statusColor = status >= 500 ? '\x1b[31m' : status >= 400 ? '\x1b[33m' : '\x1b[32m';
   const reset = '\x1b[0m';
-  const dim   = '\x1b[2m';
+  const dim = '\x1b[2m';
   return `${dim}[${now}]${reset} ${statusColor}${status}${reset} ${method} ${url} ${dim}| ip:${ip} auth:${authType} | ${time}ms${reset}`;
 }));
 
@@ -73,8 +73,41 @@ const limiter = rateLimit({
 });
 app.use('/api', limiter);
 
+// ─── Compatibility: /:apiKey/search (MUST be before express.static) ──
+// Some AI tools embed the API key in the URL path:
+//   GET /{api_key}/search?q={query}&count={n}
+// Returns Open WebUI-compatible format: { results: [{title,url,content}] }
+const { searchWeb: _searchWeb } = require('./src/services/duckduckgo');
+app.get('/:apiKey/search', limiter, async (req, res) => {
+  const { apiKey } = req.params;
+  const { q, count = '5' } = req.query;
+
+  if (apiKey !== process.env.API_KEY) {
+    return res.status(403).json({ error: 'Invalid API key', results: [] });
+  }
+  if (!q || !q.trim()) {
+    return res.status(400).json({ error: 'Missing query parameter: q', results: [] });
+  }
+
+  const limit = Math.min(parseInt(count) || 5, 10);
+  try {
+    const searchResult = await _searchWeb(q.trim(), { page: 1 });
+    const results = (searchResult.results || []).slice(0, limit).map(r => ({
+      title:   r.title   || '',
+      url:     r.url     || '',
+      content: r.snippet || '',
+    }));
+    logStore.addLog({ method: 'GET', url: `/****/search?q=${encodeURIComponent(q)}`, status: 200, time: 0, ip: req.ip || '-', authType: 'url-path' });
+    console.log(`[/:key/search] q="${q}" → ${results.length} results`);
+    res.json({ results });
+  } catch (err) {
+    res.status(500).json({ error: err.message, results: [] });
+  }
+});
+
 // ─── Static Web UI ─────────────────────────────────────────────────
 app.use(express.static(path.join(__dirname, 'public')));
+
 
 // ─── API Routes ────────────────────────────────────────────────────
 app.use('/api/search', authenticate, searchRoutes);

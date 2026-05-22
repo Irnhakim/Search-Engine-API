@@ -144,4 +144,38 @@ router.get('/openwebui', cacheMiddleware(5 * 60 * 1000), async (req, res) => {
   }
 });
 
+/**
+ * @route  GET /api/search/loader
+ * @desc   Open WebUI Web Loader compatible endpoint
+ *         Fetches full page content from a given URL
+ * @access Protected
+ * @query  url - The URL to load/scrape
+ *
+ * Open WebUI Web Loader Settings:
+ *   Web Loader Engine       → external
+ *   External Web Loader URL → http://IP:3004/api/search/loader
+ *   API Key                 → searchengine-dev-key-2024
+ */
+const { scrapeUrl } = require('../services/scraper');
+router.get('/loader', async (req, res) => {
+  const { url } = req.query;
+  if (!url) return res.status(400).json({ error: 'Missing url parameter' });
+
+  try {
+    const result = await scrapeUrl(url, { maxLength: 8000 });
+    // Open WebUI loader expects: { document: "content", metadata: {...} }
+    res.json({
+      document: result.content || '',
+      metadata: {
+        title: result.title || '',
+        url: result.url || url,
+        description: result.metaDescription || '',
+        wordCount: result.wordCount || 0,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message, document: '', metadata: { url } });
+  }
+});
+
 module.exports = router;
