@@ -2,7 +2,11 @@
 
 A full-stack search engine web app with a powerful REST API designed for **AI model integration** and **deep internet research**.
 
-![NexSearch Demo](./docs/preview.png)
+### 🏠 Homepage
+![NexSearch Homepage](./docs/preview.png)
+
+### 🔍 Search Results
+![NexSearch Search Results](./docs/results.png)
 
 ## ✨ Features
 
