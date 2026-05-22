@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NexSearch — AI-Powered Search Engine</title>
+  <meta name="description" content="NexSearch: A blazing-fast, AI-ready search engine with deep research capabilities. Powered by DuckDuckGo, built for AI model integration." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <!-- Background effects -->
+  <div class="bg-grid"></div>
+  <div class="bg-orbs">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- Header -->
+  <header class="header" id="header">
+    <div class="header-inner">
+      <a href="/" class="logo">
+        <div class="logo-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <circle cx="11" cy="11" r="7" stroke="url(#grad1)" stroke-width="2"/>
+            <path d="M20 20L16.65 16.65" stroke="url(#grad1)" stroke-width="2" stroke-linecap="round"/>
+            <defs>
+              <linearGradient id="grad1" x1="0" y1="0" x2="24" y2="24">
+                <stop offset="0%" stop-color="#6366f1"/>
+                <stop offset="100%" stop-color="#a855f7"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <span class="logo-text">Nex<span class="logo-accent">Search</span></span>
+      </a>
+      <nav class="header-nav">
+        <button class="nav-tab active" data-tab="search" id="nav-search">🔍 Search</button>
+        <button class="nav-tab" data-tab="research" id="nav-research">🧠 Deep Research</button>
+        <button class="nav-tab" data-tab="scrape" id="nav-scrape">🕷 Scrape</button>
+        <button class="nav-tab" data-tab="api" id="nav-api">⚡ API Docs</button>
+      </nav>
+      <div class="header-right">
+        <button class="api-key-btn" id="apiKeyBtn" title="Set API Key">🔑 API Key</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main">
+
+    <!-- ═══════════ SEARCH TAB ═══════════ -->
+    <section class="tab-content active" id="tab-search">
+      <!-- Hero / Search Box -->
+      <div class="hero" id="hero">
+        <h1 class="hero-title">
+          Search the Internet<br/>
+          <span class="hero-gradient">with AI Precision</span>
+        </h1>
+        <p class="hero-subtitle">Powered by DuckDuckGo · Built for AI Integration · Zero Tracking</p>
+
+        <div class="search-box" id="mainSearchBox">
+          <div class="search-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+          </div>
+          <input
+            type="text"
+            class="search-input"
+            id="searchInput"
+            placeholder="Search anything..."
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <div class="search-actions">
+            <select class="search-type-select" id="searchType" title="Search type">
+              <option value="web">🌐 Web</option>
+              <option value="news">📰 News</option>
+              <option value="instant">⚡ Instant</option>
+            </select>
+            <button class="search-btn" id="searchBtn">Search</button>
+          </div>
+        </div>
+        <div class="search-suggestions" id="searchSuggestions"></div>
+      </div>
+
+      <!-- Results Area -->
+      <div class="results-container" id="resultsContainer" style="display:none">
+        <div class="results-header">
+          <div class="results-meta" id="resultsMeta"></div>
+          <div class="results-filters">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="web">Web</button>
+            <button class="filter-btn" data-filter="news">News</button>
+          </div>
+        </div>
+
+        <!-- Instant Answer Card -->
+        <div class="instant-answer" id="instantAnswer" style="display:none">
+          <div class="instant-icon">⚡</div>
+          <div class="instant-content">
+            <div class="instant-title" id="instantTitle"></div>
+            <div class="instant-text" id="instantText"></div>
+            <a class="instant-source" id="instantSource" target="_blank" rel="noopener"></a>
+          </div>
+        </div>
+
+        <!-- Search Results List -->
+        <div class="results-list" id="resultsList"></div>
+
+        <!-- Load More -->
+        <div class="load-more-container" id="loadMoreContainer" style="display:none">
+          <button class="load-more-btn" id="loadMoreBtn">Load More Results</button>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div class="loading-state" id="loadingState" style="display:none">
+        <div class="loader-rings">
+          <div class="ring ring-1"></div>
+          <div class="ring ring-2"></div>
+          <div class="ring ring-3"></div>
+        </div>
+        <p class="loading-text">Searching the internet...</p>
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-state" id="emptyState">
+        <div class="empty-features">
+          <div class="feature-card">
+            <div class="feature-icon">🔍</div>
+            <h3>Web Search</h3>
+            <p>Real-time results from across the internet via DuckDuckGo</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🧠</div>
+            <h3>Deep Research</h3>
+            <p>Multi-query aggregation + page scraping for AI-grade research</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🕷</div>
+            <h3>Web Scraper</h3>
+            <p>Extract clean, structured content from any webpage</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">⚡</div>
+            <h3>REST API</h3>
+            <p>Full API access for AI model integration and automation</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ DEEP RESEARCH TAB ═══════════ -->
+    <section class="tab-content" id="tab-research">
+      <div class="panel-header">
+        <h2 class="panel-title">🧠 Deep Research</h2>
+        <p class="panel-subtitle">Multi-query search + content extraction — generates AI-ready research context</p>
+      </div>
+
+      <div class="research-form">
+        <div class="form-group">
+          <label class="form-label" for="researchTopic">Research Topic</label>
+          <textarea
+            class="form-textarea"
+            id="researchTopic"
+            rows="3"
+            placeholder="e.g. What is quantum computing and how does it work?"
+          ></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="maxResults">Max Results</label>
+            <input class="form-input" type="number" id="maxResults" value="10" min="3" max="30" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="maxScrape">Pages to Scrape</label>
+            <input class="form-input" type="number" id="maxScrape" value="5" min="1" max="10" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="researchRegion">Region</label>
+            <select class="form-input" id="researchRegion">
+              <option value="wt-wt">🌍 Global</option>
+              <option value="us-en">🇺🇸 US English</option>
+              <option value="gb-en">🇬🇧 UK English</option>
+              <option value="id-id">🇮🇩 Indonesia</option>
+              <option value="jp-jp">🇯🇵 Japan</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-check">
+            <input type="checkbox" id="scrapeContent" checked />
+            <span>Scrape page content (for richer AI context)</span>
+          </label>
+        </div>
+        <button class="btn-primary" id="runResearchBtn">
+          <span class="btn-icon">🚀</span> Start Deep Research
+        </button>
+      </div>
+
+      <div class="research-loading" id="researchLoading" style="display:none">
+        <div class="research-progress">
+          <div class="progress-step active" id="step1">
+            <div class="step-dot"></div>
+            <span>Running multi-query search...</span>
+          </div>
+          <div class="progress-step" id="step2">
+            <div class="step-dot"></div>
+            <span>Fetching instant answers...</span>
+          </div>
+          <div class="progress-step" id="step3">
+            <div class="step-dot"></div>
+            <span>Scraping page content...</span>
+          </div>
+          <div class="progress-step" id="step4">
+            <div class="step-dot"></div>
+            <span>Building AI context...</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="research-results" id="researchResults" style="display:none">
+        <div class="research-stats" id="researchStats"></div>
+        <div class="research-tabs">
+          <button class="res-tab active" data-restab="context">📄 AI Context</button>
+          <button class="res-tab" data-restab="results">🔗 Search Results</button>
+          <button class="res-tab" data-restab="pages">📰 Scraped Pages</button>
+          <button class="res-tab" data-restab="json">{ } Raw JSON</button>
+        </div>
+        <div class="res-tab-content active" id="restab-context">
+          <div class="ai-context-header">
+            <span>AI-Ready Context — Copy and paste into your AI model</span>
+            <button class="copy-btn" id="copyContextBtn">📋 Copy All</button>
+          </div>
+          <pre class="ai-context-box" id="aiContextBox"></pre>
+        </div>
+        <div class="res-tab-content" id="restab-results">
+          <div class="research-result-list" id="researchResultList"></div>
+        </div>
+        <div class="res-tab-content" id="restab-pages">
+          <div class="scraped-pages-list" id="scrapedPagesList"></div>
+        </div>
+        <div class="res-tab-content" id="restab-json">
+          <button class="copy-btn" id="copyJsonBtn" style="margin-bottom:12px">📋 Copy JSON</button>
+          <pre class="json-box" id="rawJsonBox"></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ SCRAPE TAB ═══════════ -->
+    <section class="tab-content" id="tab-scrape">
+      <div class="panel-header">
+        <h2 class="panel-title">🕷 Web Scraper</h2>
+        <p class="panel-subtitle">Extract clean, structured content from any webpage</p>
+      </div>
+
+      <div class="scrape-form">
+        <div class="form-group">
+          <label class="form-label" for="scrapeUrl">URL to Scrape</label>
+          <div class="url-input-wrap">
+            <input class="form-input" type="url" id="scrapeUrl" placeholder="https://example.com/article" />
+            <button class="btn-primary" id="scrapeBtn">Scrape</button>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="scrapeMaxLength">Max Content Length</label>
+            <input class="form-input" type="number" id="scrapeMaxLength" value="5000" min="500" max="20000" step="500" />
+          </div>
+        </div>
+
+        <!-- Batch Section -->
+        <div class="batch-divider">
+          <span>— or Batch Scrape —</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="batchUrls">Batch URLs <small>(one per line, max 20)</small></label>
+          <textarea class="form-textarea" id="batchUrls" rows="5" placeholder="https://site1.com&#10;https://site2.com&#10;https://site3.com"></textarea>
+        </div>
+        <button class="btn-secondary" id="batchScrapeBtn">🔄 Batch Scrape All</button>
+      </div>
+
+      <div class="scrape-loading" id="scrapeLoading" style="display:none">
+        <div class="loader-rings">
+          <div class="ring ring-1"></div>
+          <div class="ring ring-2"></div>
+        </div>
+        <p class="loading-text">Scraping content...</p>
+      </div>
+
+      <div class="scrape-results" id="scrapeResults" style="display:none"></div>
+    </section>
+
+    <!-- ═══════════ API DOCS TAB ═══════════ -->
+    <section class="tab-content" id="tab-api">
+      <div class="panel-header">
+        <h2 class="panel-title">⚡ API Documentation</h2>
+        <p class="panel-subtitle">Full REST API reference for AI model integration</p>
+      </div>
+
+      <div class="api-key-display" id="apiKeyDisplay">
+        <div class="api-key-label">Your API Key</div>
+        <div class="api-key-value" id="apiKeyValue">Not set — click 🔑 to configure</div>
+      </div>
+
+      <div class="api-base-url">
+        <span class="api-label">Base URL</span>
+        <code class="api-url" id="baseUrlDisplay"></code>
+      </div>
+
+      <div class="endpoints-list">
+
+        <!-- Search -->
+        <div class="endpoint-card">
+          <div class="endpoint-header">
+            <span class="method get">GET</span>
+            <code class="endpoint-path">/api/search</code>
+            <span class="endpoint-desc">Web Search</span>
+          </div>
+          <div class="endpoint-body">
+            <div class="params-table">
+              <div class="param-row header"><span>Parameter</span><span>Type</span><span>Required</span><span>Description</span></div>
+              <div class="param-row"><code>q</code><span>string</span><span class="req">Yes</span><span>Search query</span></div>
+              <div class="param-row"><code>page</code><span>number</span><span>No</span><span>Result page (default: 1)</span></div>
+              <div class="param-row"><code>region</code><span>string</span><span>No</span><span>Region code (default: wt-wt)</span></div>
+              <div class="param-row"><code>safeSearch</code><span>string</span><span>No</span><span>moderate / strict / off</span></div>
+            </div>
+            <div class="code-example">
+              <div class="code-header">Example Request <button class="try-btn" data-endpoint="search">▶ Try it</button></div>
+              <pre class="code-block">curl -H "X-Api-Key: YOUR_KEY" \
+  "http://localhost:3000/api/search?q=quantum+computing"</pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- News Search -->
+        <div class="endpoint-card">
+          <div class="endpoint-header">
+            <span class="method get">GET</span>
+            <code class="endpoint-path">/api/search/news</code>
+            <span class="endpoint-desc">News Search</span>
+          </div>
+          <div class="endpoint-body">
+            <div class="code-example">
+              <pre class="code-block">curl -H "X-Api-Key: YOUR_KEY" \
+  "http://localhost:3000/api/search/news?q=AI+technology"</pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Instant Answer -->
+        <div class="endpoint-card">
+          <div class="endpoint-header">
+            <span class="method get">GET</span>
+            <code class="endpoint-path">/api/search/instant</code>
+            <span class="endpoint-desc">Instant Answer</span>
+          </div>
+          <div class="endpoint-body">
+            <div class="code-example">
+              <pre class="code-block">curl -H "X-Api-Key: YOUR_KEY" \
+  "http://localhost:3000/api/search/instant?q=Albert+Einstein"</pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scrape -->
+        <div class="endpoint-card">
+          <div class="endpoint-header">
+            <span class="method post">POST</span>
+            <code class="endpoint-path">/api/scrape</code>
+            <span class="endpoint-desc">Scrape URL</span>
+          </div>
+          <div class="endpoint-body">
+            <div class="params-table">
+              <div class="param-row header"><span>Field</span><span>Type</span><span>Required</span><span>Description</span></div>
+              <div class="param-row"><code>url</code><span>string</span><span class="req">Yes</span><span>Target URL to scrape</span></div>
+              <div class="param-row"><code>maxLength</code><span>number</span><span>No</span><span>Max content chars (default: 5000)</span></div>
+            </div>
+            <div class="code-example">
+              <pre class="code-block">curl -X POST -H "X-Api-Key: YOUR_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"url":"https://en.wikipedia.org/wiki/Artificial_intelligence"}' \
+  "http://localhost:3000/api/scrape"</pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Deep Research -->
+        <div class="endpoint-card highlight">
+          <div class="endpoint-header">
+            <span class="method post">POST</span>
+            <code class="endpoint-path">/api/research</code>
+            <span class="endpoint-desc">🧠 Deep Research (AI-Ready)</span>
+          </div>
+          <div class="endpoint-body">
+            <div class="params-table">
+              <div class="param-row header"><span>Field</span><span>Type</span><span>Required</span><span>Description</span></div>
+              <div class="param-row"><code>topic</code><span>string</span><span class="req">Yes</span><span>Research topic or question</span></div>
+              <div class="param-row"><code>maxResults</code><span>number</span><span>No</span><span>Max search results (default: 10)</span></div>
+              <div class="param-row"><code>maxScrape</code><span>number</span><span>No</span><span>Max pages to scrape (default: 5)</span></div>
+              <div class="param-row"><code>scrapeContent</code><span>bool</span><span>No</span><span>Scrape page content (default: true)</span></div>
+              <div class="param-row"><code>region</code><span>string</span><span>No</span><span>Search region code</span></div>
+            </div>
+            <div class="code-example">
+              <div class="code-header">Example — AI Model Integration</div>
+              <pre class="code-block">// 1. Call deep research
+const response = await fetch('/api/research', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-Api-Key': 'YOUR_KEY'
+  },
+  body: JSON.stringify({
+    topic: 'What is the latest news about GPT-5?',
+    maxResults: 15,
+    maxScrape: 5,
+    scrapeContent: true
+  })
+});
+
+const { data } = await response.json();
+
+// 2. Feed aiContext to your AI model
+const aiResponse = await openai.chat.completions.create({
+  model: 'gpt-4',
+  messages: [
+    { role: 'system', content: 'You are a research assistant.' },
+    { role: 'user', content: data.aiContext }, // ← Full research context
+    { role: 'user', content: 'Summarize the key findings.' }
+  ]
+});</pre>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- API Key Modal -->
+  <div class="modal-overlay" id="apiKeyModal" style="display:none">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>🔑 Configure API Key</h3>
+        <button class="modal-close" id="closeModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc">Enter your Search Engine API key to use the search features. The default dev key is <code>searchengine-dev-key-2024</code></p>
+        <input type="text" class="form-input" id="apiKeyInput" placeholder="searchengine-dev-key-2024" />
+      </div>
+      <div class="modal-footer">
+        <button class="btn-primary" id="saveApiKey">Save Key</button>
+        <button class="btn-secondary" id="cancelModal">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notifications -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>
