@@ -342,3 +342,131 @@ function escHtml(str) {
 
 // ─── Init ─────────────────────────────────────────────────────────────
 $('searchInput').focus();
+
+// ─── LOGS TAB ─────────────────────────────────────────────────────────
+const logsState = { total:0, ok:0, warn:0, err:0, times:[] };
+let logEventSource = null;
+
+function statusClass(s) {
+  if (s >= 500) return 's5';
+  if (s >= 400) return 's4';
+  if (s >= 200) return 's2';
+  return 's0';
+}
+
+function buildLogRow(log, isNew = false) {
+  const sc = statusClass(log.status);
+  const authClass = (log.authType || '-').replace(/[^a-zA-Z0-9-_]/g, '');
+  const tr = document.createElement('tr');
+  if (isNew) { tr.classList.add('log-new'); setTimeout(() => tr.classList.remove('log-new'), 1200); }
+  tr.innerHTML = `
+    <td>${escHtml(log.time || '')}</td>
+    <td><span class="log-badge ${sc}">${escHtml(String(log.status || '?'))}</span></td>
+    <td><span class="log-method ${escHtml(log.method || '')}">${escHtml(log.method || '')}</span></td>
+    <td class="log-url">${escHtml(log.url || '')}</td>
+    <td><span class="log-auth ${authClass}">${escHtml(log.authType || '-')}</span></td>
+    <td>${escHtml((log.ip || '').replace('::ffff:','').replace('::1','localhost'))}</td>
+    <td>${escHtml(String(log.time_ms ?? log.time ?? '?'))}ms</td>`;
+  return tr;
+}
+
+function updateLogStats() {
+  $('logTotal').textContent = logsState.total;
+  $('logOk').textContent    = logsState.ok;
+  $('logWarn').textContent  = logsState.warn;
+  $('logErr').textContent   = logsState.err;
+  if (logsState.times.length > 0) {
+    const avg = Math.round(logsState.times.reduce((a,b) => a+b, 0) / logsState.times.length);
+    $('logAvgTime').textContent = avg + 'ms';
+  }
+}
+
+function addLogEntry(log, isNew = false) {
+  const tbody = $('logTableBody');
+  // Remove empty-state row
+  const empty = tbody.querySelector('.log-empty-row');
+  if (empty) empty.remove();
+
+  // Update counters
+  logsState.total++;
+  if (log.status >= 500) logsState.err++;
+  else if (log.status >= 400) logsState.warn++;
+  else logsState.ok++;
+  if (log.time) logsState.times.push(parseInt(log.time));
+  if (logsState.times.length > 200) logsState.times.shift();
+  updateLogStats();
+
+  // Build and insert row at top (newest first)
+  const row = buildLogRow({ ...log, time_ms: log.time }, isNew);
+  tbody.insertBefore(row, tbody.firstChild);
+
+  // Auto-scroll (scroll to top since newest first)
+  if ($('logAutoScroll').checked) {
+    $('logTableWrap').scrollTop = 0;
+  }
+}
+
+function setLogStatus(status) {
+  const dot  = $('logStatusDot');
+  const text = $('logStatusText');
+  dot.className = 'log-status-dot ' + status;
+  const labels = { connected:'🟢 Connected — live', connecting:'⏳ Connecting...', error:'🔴 Disconnected' };
+  text.textContent = labels[status] || status;
+}
+
+function connectLogStream() {
+  if (logEventSource) { logEventSource.close(); logEventSource = null; }
+  setLogStatus('connecting');
+
+  const url = `/api/logs/stream?api_key=${encodeURIComponent(state.apiKey)}`;
+  const es = new EventSource(url);
+  logEventSource = es;
+
+  es.onopen = () => setLogStatus('connected');
+
+  es.onmessage = (e) => {
+    try {
+      const payload = JSON.parse(e.data);
+      if (payload.type === 'init') {
+        // Bulk load existing logs (newest first, already sorted)
+        payload.logs.forEach(log => addLogEntry(log, false));
+      } else {
+        // Single new log entry
+        addLogEntry(payload, true);
+      }
+    } catch {}
+  };
+
+  es.onerror = () => {
+    setLogStatus('error');
+    es.close();
+    logEventSource = null;
+    // Retry after 5 seconds
+    setTimeout(() => {
+      if ($('tab-logs').classList.contains('active')) connectLogStream();
+    }, 5000);
+  };
+}
+
+// Connect when Logs tab is opened
+document.querySelectorAll('.nav-tab').forEach(btn => {
+  const orig = btn.onclick;
+  btn.addEventListener('click', () => {
+    if (btn.dataset.tab === 'logs' && !logEventSource) {
+      connectLogStream();
+    }
+  });
+});
+
+// Clear logs button
+$('clearLogsBtn').addEventListener('click', async () => {
+  try {
+    await apiFetch('/api/logs', { method: 'DELETE' });
+    $('logTableBody').innerHTML = '<tr class="log-empty-row"><td colspan="7">Logs cleared.</td></tr>';
+    Object.assign(logsState, { total:0, ok:0, warn:0, err:0, times:[] });
+    updateLogStats();
+    showToast('Logs cleared', 'success');
+  } catch (e) {
+    showToast('Failed to clear logs: ' + e.message, 'error');
+  }
+});

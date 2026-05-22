@@ -42,6 +42,7 @@
         <button class="nav-tab" data-tab="research" id="nav-research">🧠 Deep Research</button>
         <button class="nav-tab" data-tab="scrape" id="nav-scrape">🕷 Scrape</button>
         <button class="nav-tab" data-tab="api" id="nav-api">⚡ API Docs</button>
+        <button class="nav-tab" data-tab="logs" id="nav-logs">📊 Logs</button>
       </nav>
       <div class="header-right">
         <button class="api-key-btn" id="apiKeyBtn" title="Set API Key">🔑 API Key</button>
@@ -438,6 +439,58 @@ const aiResponse = await openai.chat.completions.create({
           </div>
         </div>
 
+      </div>
+    </section>
+
+    <!-- ═══════════ LOGS TAB ═══════════ -->
+    <section class="tab-content" id="tab-logs">
+      <div class="panel-header">
+        <h2 class="panel-title">📊 API Request Logs</h2>
+        <p class="panel-subtitle">Real-time log of all API requests — streamed live via SSE</p>
+      </div>
+
+      <!-- Log Toolbar -->
+      <div class="log-toolbar">
+        <div class="log-status" id="logStatus">
+          <span class="log-status-dot" id="logStatusDot"></span>
+          <span id="logStatusText">Connecting...</span>
+        </div>
+        <div class="log-toolbar-right">
+          <label class="log-toggle">
+            <input type="checkbox" id="logAutoScroll" checked />
+            <span>Auto-scroll</span>
+          </label>
+          <button class="btn-secondary" id="clearLogsBtn" style="padding:6px 14px;font-size:.82rem">🗑 Clear</button>
+        </div>
+      </div>
+
+      <!-- Log Stats Bar -->
+      <div class="log-stats" id="logStats">
+        <div class="log-stat"><span class="log-stat-val" id="logTotal">0</span><span>Total</span></div>
+        <div class="log-stat log-stat-ok"><span class="log-stat-val" id="logOk">0</span><span>2xx OK</span></div>
+        <div class="log-stat log-stat-warn"><span class="log-stat-val" id="logWarn">0</span><span>4xx Warn</span></div>
+        <div class="log-stat log-stat-err"><span class="log-stat-val" id="logErr">0</span><span>5xx Error</span></div>
+        <div class="log-stat"><span class="log-stat-val" id="logAvgTime">—</span><span>Avg ms</span></div>
+      </div>
+
+      <!-- Log Table -->
+      <div class="log-table-wrap" id="logTableWrap">
+        <table class="log-table" id="logTable">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Status</th>
+              <th>Method</th>
+              <th>Endpoint</th>
+              <th>Auth</th>
+              <th>IP</th>
+              <th>ms</th>
+            </tr>
+          </thead>
+          <tbody id="logTableBody">
+            <tr class="log-empty-row"><td colspan="7">No logs yet. Make an API request to see activity.</td></tr>
+          </tbody>
+        </table>
       </div>
     </section>
 
