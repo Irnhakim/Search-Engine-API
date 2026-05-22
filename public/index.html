@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>NexSearch — AI-Powered Search Engine</title>
   <meta name="description" content="NexSearch: A blazing-fast, AI-ready search engine with deep research capabilities. Powered by DuckDuckGo, built for AI model integration." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -482,9 +485,9 @@ const aiResponse = await openai.chat.completions.create({
               <th>Status</th>
               <th>Method</th>
               <th>Endpoint</th>
-              <th>Auth</th>
-              <th>IP</th>
-              <th>ms</th>
+              <th class="log-col-auth">Auth</th>
+              <th class="log-col-ip">IP</th>
+              <th class="log-col-ms">ms</th>
             </tr>
           </thead>
           <tbody id="logTableBody">

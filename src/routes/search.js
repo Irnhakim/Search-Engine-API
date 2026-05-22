@@ -99,50 +99,46 @@ router.get('/instant', cacheMiddleware(10 * 60 * 1000), async (req, res) => {
 });
 
 /**
- * @route  GET /api/search/openwebui
+ * @route  GET|POST /api/search/openwebui
  * @desc   Open WebUI / Ollama compatible web search endpoint
- * @access Protected (API Key via Authorization: Bearer or X-Api-Key)
- * @query  q     - Search query (required)
- * @query  count - Number of results (default: 5, max: 10)
+ * @access Protected (Authorization: Bearer or X-Api-Key)
  *
- * Response format follows Open WebUI external search spec:
- * { "results": [{ "title": "...", "url": "...", "content": "..." }] }
+ * Open WebUI sends POST with JSON body: { "query": "...", "count": 5 }
+ * Also accepts GET ?q=...&count=... for manual testing
  *
- * Setup in Open WebUI:
- *   Web Search Engine   → external
- *   External Search URL → http://YOUR_SERVER:3004/api/search/openwebui
- *   API Key             → searchengine-dev-key-2024
+ * Response: { "results": [{ "title", "url", "content" }] }
  */
-router.get('/openwebui', cacheMiddleware(5 * 60 * 1000), async (req, res) => {
-  const { q, count = '5' } = req.query;
+const _handleOpenWebUI = async (req, res) => {
+  // POST body OR GET query param
+  const q     = req.body?.query || req.body?.q || req.query.q || '';
+  const count = req.body?.count || req.query.count || '5';
 
   if (!q || q.trim().length === 0) {
-    return res.status(400).json({ error: 'Missing query parameter: q' });
+    return res.status(400).json({ error: 'Missing query', results: [] });
   }
 
   const limit = Math.min(parseInt(count) || 5, 10);
 
   try {
     const searchResult = await searchWeb(q.trim(), { page: 1 });
-    const rawResults = (searchResult.results || []).slice(0, limit);
-
-    // Map to Open WebUI format: { title, url, content }
-    const results = rawResults.map((r) => ({
-      title: r.title || '',
-      url: r.url || '',
-      content: r.snippet || '',   // Open WebUI uses "content" not "snippet"
+    const results = (searchResult.results || []).slice(0, limit).map((r) => ({
+      title:   r.title   || '',
+      url:     r.url     || '',
+      content: r.snippet || '',
     }));
 
-    console.log(`[OpenWebUI] q="${q}" → ${results.length} results`);
-
-    // Return bare array format expected by Open WebUI (no wrapper)
+    console.log(`[OpenWebUI] ${req.method} q="${q}" → ${results.length} results`);
     res.json({ results });
 
   } catch (error) {
     console.error('[OpenWebUI] Error:', error.message);
     res.status(500).json({ error: error.message, results: [] });
   }
-});
+};
+
+router.get('/openwebui',  cacheMiddleware(5 * 60 * 1000), _handleOpenWebUI);
+router.post('/openwebui', _handleOpenWebUI);
+
 
 /**
  * @route  GET /api/search/loader

@@ -357,17 +357,59 @@ function statusClass(s) {
 function buildLogRow(log, isNew = false) {
   const sc = statusClass(log.status);
   const authClass = (log.authType || '-').replace(/[^a-zA-Z0-9-_]/g, '');
+  const hasDetail = !!(log.body || log.query);
+
+  // Main row
   const tr = document.createElement('tr');
+  tr.classList.add('log-row');
+  if (hasDetail) tr.classList.add('log-row-expandable');
   if (isNew) { tr.classList.add('log-new'); setTimeout(() => tr.classList.remove('log-new'), 1200); }
+
+  const chevron = hasDetail ? `<span class="log-chevron">▶</span>` : `<span class="log-chevron-placeholder"></span>`;
   tr.innerHTML = `
-    <td>${escHtml(log.time || '')}</td>
+    <td>${chevron}${escHtml(log.time || '')}</td>
     <td><span class="log-badge ${sc}">${escHtml(String(log.status || '?'))}</span></td>
     <td><span class="log-method ${escHtml(log.method || '')}">${escHtml(log.method || '')}</span></td>
     <td class="log-url">${escHtml(log.url || '')}</td>
-    <td><span class="log-auth ${authClass}">${escHtml(log.authType || '-')}</span></td>
-    <td>${escHtml((log.ip || '').replace('::ffff:','').replace('::1','localhost'))}</td>
-    <td>${escHtml(String(log.time_ms ?? log.time ?? '?'))}ms</td>`;
-  return tr;
+    <td class="log-col-auth"><span class="log-auth ${authClass}">${escHtml(log.authType || '-')}</span></td>
+    <td class="log-col-ip">${escHtml((log.ip || '').replace('::ffff:','').replace('::1','localhost'))}</td>
+    <td class="log-col-ms">${escHtml(String(log.time_ms ?? log.time ?? '?'))}ms</td>`;
+
+  // Detail row (hidden by default)
+  const detailTr = document.createElement('tr');
+  detailTr.classList.add('log-detail-row');
+  detailTr.style.display = 'none';
+
+  const sections = [];
+  if (log.query && Object.keys(log.query).length > 0) {
+    // Filter out api_key from display
+    const q = { ...log.query };
+    delete q.api_key;
+    if (Object.keys(q).length > 0)
+      sections.push(`<div class="log-detail-section"><span class="log-detail-label">🔍 Query Params</span><pre class="log-detail-json">${escHtml(JSON.stringify(q, null, 2))}</pre></div>`);
+  }
+  if (log.body) {
+    sections.push(`<div class="log-detail-section"><span class="log-detail-label">📦 Request Body</span><pre class="log-detail-json">${escHtml(JSON.stringify(log.body, null, 2))}</pre></div>`);
+  }
+
+  detailTr.innerHTML = `<td colspan="7"><div class="log-detail-panel">${sections.join('') || '<span style="color:var(--text-muted)">No detail available</span>'}</div></td>`;
+
+  // Toggle on row click
+  if (hasDetail) {
+    tr.addEventListener('click', () => {
+      const isOpen = detailTr.style.display !== 'none';
+      detailTr.style.display = isOpen ? 'none' : 'table-row';
+      const chev = tr.querySelector('.log-chevron');
+      if (chev) chev.textContent = isOpen ? '▶' : '▼';
+      tr.classList.toggle('log-row-open', !isOpen);
+    });
+  }
+
+  // Return both rows as a fragment
+  const frag = document.createDocumentFragment();
+  frag.appendChild(tr);
+  frag.appendChild(detailTr);
+  return frag;
 }
 
 function updateLogStats() {
@@ -383,7 +425,6 @@ function updateLogStats() {
 
 function addLogEntry(log, isNew = false) {
   const tbody = $('logTableBody');
-  // Remove empty-state row
   const empty = tbody.querySelector('.log-empty-row');
   if (empty) empty.remove();
 
@@ -396,15 +437,13 @@ function addLogEntry(log, isNew = false) {
   if (logsState.times.length > 200) logsState.times.shift();
   updateLogStats();
 
-  // Build and insert row at top (newest first)
-  const row = buildLogRow({ ...log, time_ms: log.time }, isNew);
-  tbody.insertBefore(row, tbody.firstChild);
+  // Insert fragment (main row + detail row) at top
+  const frag = buildLogRow({ ...log, time_ms: log.time }, isNew);
+  tbody.insertBefore(frag, tbody.firstChild);
 
-  // Auto-scroll (scroll to top since newest first)
-  if ($('logAutoScroll').checked) {
-    $('logTableWrap').scrollTop = 0;
-  }
+  if ($('logAutoScroll').checked) $('logTableWrap').scrollTop = 0;
 }
+
 
 function setLogStatus(status) {
   const dot  = $('logStatusDot');
